@@ -668,6 +668,7 @@ async function init() {
     // Sprachdatei nicht ladbar (sollte dank Offline-Cache nicht passieren): Schlüssel statt Texte
   }
   document.documentElement.classList.remove('i18n-loading');
+  $('#appVersion').textContent = `v${APP_VERSION}`;
   translateDom();
   renderLanguageSelect();
   $('#langSelect').addEventListener('change', (e) => changeLanguage(e.target.value));

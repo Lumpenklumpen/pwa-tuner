@@ -8,6 +8,15 @@
   A chromatic instrument tuner for <b>guitar, bass and ukulele</b> that runs in the browser and installs as an app on your phone.
 </p>
 
+<p align="center">
+  <a href="https://lumpenklumpen.github.io/pwa-tuner/"><b>Open PWA-Tuner</b></a>
+  &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
+  <br><br>
+  <a href="https://github.com/Lumpenklumpen/pwa-tuner/actions/workflows/deploy.yml"><img src="https://github.com/Lumpenklumpen/pwa-tuner/actions/workflows/deploy.yml/badge.svg" alt="Test and deploy"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+</p>
+
 PWA-Tuner is a Progressive Web App written in plain HTML, CSS and JavaScript: no framework, no build step, no dependencies. After the first visit it works offline.
 
 <p align="center">
@@ -53,7 +62,7 @@ Open `http://localhost:8080` and tap **Start tuning**. Browsers only allow micro
 
 ### Using it on an Android phone
 
-If the app is hosted over HTTPS (for example on GitHub Pages), just open the URL on your phone.
+The easiest way is the hosted version: open <https://lumpenklumpen.github.io/pwa-tuner/> on your phone.
 
 To use a development server on your PC from your phone, both devices need to be on the same network. Open `http://<your-PC-IP>:8080` on the phone. Chrome blocks the microphone and app installation on plain `http://` addresses, so mark the address as trusted:
 
@@ -83,6 +92,7 @@ They cover:
 - **Tuning data:** valid notes, string counts, ascending strings, stable IDs and spelling.
 - **Translations:** identical keys and placeholders in all languages, no missing or unused keys.
 - **Offline cache:** every file listed in the service worker exists.
+- **Release:** the version has the form `MAJOR.MINOR.PATCH`, the changelog has an entry for it, and every cached file is published.
 
 ### Project structure
 
@@ -90,6 +100,7 @@ They cover:
 |---|---|
 | `index.html` | Page markup |
 | `css/style.css` | Layout and themes (CSS custom properties per `data-theme`) |
+| `js/version.js` | The app version, used by the menu and the service worker |
 | `js/app.js` | State, persistence (`localStorage`), tuning picker, meter, automatic string detection, wake lock |
 | `js/pitch.js` | Pitch detection (YIN), independent of the browser so it can be tested in Node |
 | `js/audio.js` | Microphone → `AnalyserNode` → YIN, about 25 measurements per second |
@@ -101,6 +112,8 @@ They cover:
 | `manifest.webmanifest` | App name, icons, display mode |
 | `icons/` | App icons and logo (SVG sources and rendered PNGs) |
 | `tests/` | Tests |
+| `.github/workflows/deploy.yml` | Runs the tests and publishes to GitHub Pages |
+| `CHANGELOG.md` | Changes per version |
 
 ### How the pitch detection works
 
@@ -116,7 +129,7 @@ YIN finds the period of the signal through a cumulative normalized difference fu
 
 1. Copy `locales/en.json` to `locales/<id>.json` and translate the values.
 2. Add the language to `LANGUAGES` in `js/i18n.js`, with its name in that language, e.g. `{ id: 'fr', name: 'Français' }`.
-3. Add the file to `FILES` in `sw.js` and bump `VERSION`.
+3. Add the file to `FILES` in `sw.js`.
 4. Add the language to `LANGS` in `tests/i18n.test.js`. The tests then check that no key or placeholder is missing.
 
 ### Adding a tuning
@@ -127,8 +140,45 @@ Do not change the `id` of an existing tuning. IDs are stored on the user's devic
 
 ### Updates and caching
 
-The service worker answers from its cache first and fetches the new version in the background (stale-while-revalidate). A change therefore shows up on the **second** reload. When you add or remove files, update `FILES` in `sw.js` and bump `VERSION`.
+The service worker answers from its cache first and fetches the new version in the background (stale-while-revalidate). A change therefore shows up on the **second** reload. The cache is named after the app version, so a new release replaces the old cache. When you add or remove files, update `FILES` in `sw.js`.
+
+## Deployment
+
+Every push to `main` runs the [Test and deploy](.github/workflows/deploy.yml) workflow. It runs the tests and, only if they pass, publishes the app to GitHub Pages. Pull requests are tested but not published.
+
+## Releasing a new version
+
+PWA-Tuner uses [Semantic Versioning](https://semver.org/):
+- **patch** (1.0.1) for fixes;
+- **minor** (1.1.0) for new features such as tunings or languages;
+- **major** (2.0.0) for changes that break something, such as stored settings that are no longer compatible.
+
+1. Set the new version in `js/version.js`.
+2. In `CHANGELOG.md`, move the entries from *Unreleased* into a new section for the version.
+3. Commit, tag and push:
+
+   ```bash
+   git commit -am "Release v1.1.0"
+   git tag v1.1.0
+   git push origin main --tags
+   ```
+
+4. Create a GitHub release for the tag, using the changelog section as release notes:
+
+   ```bash
+   gh release create v1.1.0 --title "v1.1.0" --notes-file <(awk -v h="## [1.1.0]" 'index($0, h) == 1 {f=1; next} /^## / || /^\[.*\]: / {f=0} f' CHANGELOG.md)
+   ```
+
+The version is shown at the bottom of the menu, so you can check on your phone which version is running.
+
+## Contributing
+
+Contributions are welcome. Fork the repository, make your change on a branch, run `node --test tests/` and open a pull request. Please add an entry under *Unreleased* in `CHANGELOG.md`.
 
 ## Browser support
 
 Tested with Chrome and Edge, and Chrome on Android. The app needs `getUserMedia` and the Web Audio API, which all current browsers support. Installation and keeping the screen on depend on browser support for web app manifests and the Screen Wake Lock API.
+
+## License
+
+[MIT](LICENSE)

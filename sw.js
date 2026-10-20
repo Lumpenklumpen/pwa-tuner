@@ -2,15 +2,17 @@
 
 // Offline-Cache. Strategie "stale-while-revalidate": sofort aus dem Cache antworten,
 // im Hintergrund die neue Version holen. Änderungen sind damit ab dem nächsten Öffnen da.
-// VERSION hochzählen, wenn Dateien dazukommen oder wegfallen.
-const VERSION = 'v4';
-const CACHE = `pwa-tuner-${VERSION}`;
+// Der Cache heißt nach der App-Version (js/version.js); ein neues Release räumt den alten Cache ab.
+// Kommen Dateien hinzu oder fallen weg: FILES anpassen.
+importScripts('js/version.js');
+const CACHE = `pwa-tuner-v${APP_VERSION}`;
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
   'css/style.css',
+  'js/version.js',
   'js/i18n.js',
   'js/tunings.js',
   'js/pitch.js',
