@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" class="i18n-loading">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PWA-Tuner</title>
+  <meta name="theme-color" content="#0b0c10">
+  <meta name="description" content="PWA-Tuner: tuner for guitar, bass and ukulele">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Theme vor dem ersten Rendern setzen, damit nichts aufblitzt
+    try {
+      var s = JSON.parse(localStorage.getItem('pwa-tuner') || '{}');
+      var t = ['light', 'dark', 'led'].indexOf(s.theme) >= 0 ? s.theme
+        : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.dataset.theme = t;
+    } catch (e) { document.documentElement.dataset.theme = 'dark'; }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg viewBox="0 0 200 240" aria-hidden="true"><path d="M100 232 C 62 232 22 128 14 72 C 8 28 48 8 100 8 C 152 8 192 28 186 72 C 178 128 138 232 100 232 Z"/></svg>
+        <span>PWA-Tuner</span>
+      </div>
+      <button id="menuBtn" class="icon-btn" data-i18n-label="menu.open" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      </button>
+    </header>
+
+    <div class="tuning-row">
+      <button id="tuningBtn" class="tuning-field" type="button"
+              aria-haspopup="listbox" aria-expanded="false" aria-controls="tuningList">
+        <span class="field-label" data-i18n="tuning.label">Tuning</span>
+        <span id="tuningName" class="field-value">Standard</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <ul id="tuningList" class="tuning-list" role="listbox" data-i18n-label="tuning.list" aria-label="Tunings" tabindex="-1" hidden></ul>
+    </div>
+
+    <main id="tuner" class="tuner" data-status="idle">
+      <div class="gauge-wrap">
+        <!-- Halbkreis um (150|158): −50 ct links (−90°), 0 oben, +50 ct rechts (+90°) -->
+        <svg id="gauge" class="gauge" viewBox="0 0 300 182" role="img" data-i18n-label="gauge.label" aria-label="Tuning meter">
+          <defs>
+            <linearGradient id="pickFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" class="pick-stop-a"/>
+              <stop offset="1" class="pick-stop-b"/>
+            </linearGradient>
+          </defs>
+          <path class="pick" d="M4 158 A146 146 0 0 1 296 158 Z"/>
+          <g id="scale"></g>
+          <text id="note" class="note" x="150" y="146" text-anchor="middle">E</text>
+          <g id="noteLed" class="led-only"></g>
+          <g id="needle" class="needle">
+            <polygon class="needle-shape" points="147.2,94 152.8,94 150.9,22 149.1,22"/>
+            <line class="needle-led" x1="150" y1="94" x2="150" y2="22"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="readout">
+        <div class="freq">
+          <span id="freq" class="no-led">–</span>
+          <svg id="freqLed" class="freq-led led-only" aria-hidden="true"></svg>
+          <span class="unit">Hz</span>
+        </div>
+        <div class="target"><span data-i18n="readout.target">Target</span> <b id="targetNote">E2</b> · <span id="targetFreq">82,41</span> Hz</div>
+        <div id="cents" class="cents"></div>
+        <button id="micBtn" class="mic-btn" type="button" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>
+          <span data-i18n="mic.start">Start tuning</span>
+        </button>
+        <p id="micMsg" class="mic-msg" role="alert" hidden></p>
+      </div>
+
+      <section class="strings-panel" data-i18n-label="strings.label" aria-label="Strings">
+        <div class="strings-head">
+          <span id="stringMode" class="strings-label"></span>
+          <button id="autoBtn" class="auto-toggle" type="button" role="switch" aria-checked="true">
+            <span class="switch" aria-hidden="true"></span>
+            <span data-i18n="strings.autoButton">Auto</span>
+          </button>
+        </div>
+        <div id="strings" class="strings" role="group" data-i18n-label="strings.choose" aria-label="Choose string"></div>
+      </section>
+    </main>
+
+    <nav class="tabs" role="tablist" data-i18n-label="tabs.label" aria-label="Instrument">
+      <button class="tab" role="tab" data-instrument="guitar" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g transform="rotate(40 12 12)">
+            <rect x="11" y="0.5" width="2" height="10"/>
+            <rect x="10.2" y="-1" width="3.6" height="3" rx="0.8"/>
+            <ellipse cx="12" cy="12.8" rx="3.7" ry="3.4"/>
+            <ellipse cx="12" cy="18.2" rx="5" ry="4.4"/>
+          </g>
+        </svg>
+        <span data-i18n="tabs.guitar">Guitar</span>
+      </button>
+      <button class="tab" role="tab" data-instrument="bass" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g transform="rotate(40 12 12)">
+            <rect x="11.25" y="-2" width="1.5" height="16"/>
+            <rect x="10.4" y="-3.2" width="3.2" height="3" rx="0.8"/>
+            <ellipse cx="11.2" cy="15" rx="3" ry="2.8"/>
+            <ellipse cx="12" cy="19.4" rx="4.4" ry="3.8"/>
+          </g>
+        </svg>
+        <span data-i18n="tabs.bass">Bass</span>
+      </button>
+      <button class="tab" role="tab" data-instrument="ukulele" aria-selected="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g transform="rotate(40 12 12)">
+            <rect x="11" y="4" width="2" height="8"/>
+            <rect x="10.2" y="2.4" width="3.6" height="2.8" rx="0.8"/>
+            <ellipse cx="12" cy="13.2" rx="2.9" ry="2.6"/>
+            <ellipse cx="12" cy="17.2" rx="3.8" ry="3.3"/>
+          </g>
+        </svg>
+        <span data-i18n="tabs.ukulele">Ukulele</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="scrim" class="scrim" hidden></div>
+  <aside id="menu" class="drawer" hidden data-i18n-label="menu.title" aria-label="Settings">
+    <div class="drawer-head">
+      <h2 data-i18n="menu.title">Settings</h2>
+      <button id="menuClose" class="icon-btn" data-i18n-label="menu.close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <section class="setting">
+      <h3><label for="langSelect" data-i18n="settings.language">Language</label></h3>
+      <div class="select-wrap">
+        <select id="langSelect"></select>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </section>
+
+    <section class="setting">
+      <h3 data-i18n="settings.design">Design</h3>
+      <div id="themeList" class="theme-list" role="radiogroup" data-i18n-label="settings.design" aria-label="Design"></div>
+    </section>
+
+    <section class="setting">
+      <h3 data-i18n="settings.a4">Reference pitch A4</h3>
+      <div class="stepper">
+        <button id="a4Down" type="button" data-i18n-label="settings.a4Down" aria-label="Lower reference pitch by 1 Hz">−</button>
+        <output id="a4Value" aria-live="polite">440 Hz</output>
+        <button id="a4Up" type="button" data-i18n-label="settings.a4Up" aria-label="Raise reference pitch by 1 Hz">+</button>
+      </div>
+      <p class="hint" data-i18n="settings.a4Hint"></p>
+      <button id="a4Reset" class="link-btn" type="button" data-i18n="settings.a4Reset" hidden>Back to 440 Hz</button>
+    </section>
+
+    <button id="installBtn" class="install-btn" type="button" data-i18n="settings.install" hidden>Install app</button>
+  </aside>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/tunings.js"></script>
+  <script src="js/pitch.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/matrix.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
